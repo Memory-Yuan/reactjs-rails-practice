@@ -1,3 +1,4 @@
+# Comment sample
 $ ->
   converter = new Showdown.converter()
 
@@ -26,6 +27,20 @@ $ ->
       .fail (xhr, status, err) =>
         console.error @props.url, status, err.toString()
 
+    handleCommitDelete: (commitID)->
+      comments = @state.data
+      newComments = comments.filter (ele) -> ele.id != commitID
+      @setState(data: newComments)
+
+      $.ajax
+        url: @props.url + "/" + commitID
+        dataType: 'json'
+        type: 'DELETE'
+      .done (data) =>
+        @setState(data: data)
+      .fail (xhr, status, err) =>
+        console.error @props.url, status, err.toString()
+
     getInitialState: -> data: []
 
     componentDidMount: ->
@@ -35,16 +50,18 @@ $ ->
     render: ->
       `<div className="commentBox">
          <h1>Comment</h1>
-         <CommentList data={ this.state.data } />
+         <CommentList data={ this.state.data } onCommentDel={this.handleCommitDelete} />
          <CommentForm onCommentSubmit={ this.handleCommentSubmit } />
        </div>`
 
   CommentList = React.createClass
+    handleDelete: (commentID)->
+      @props.onCommentDel(commentID)
     render: ->
-      commentNodes = @props.data.map (comment) ->
-        `<Comment author={ comment.author }>{ comment.text }</Comment>`
-      `<div className="commentList">{ commentNodes }</div>`
+      commentNodes = @props.data.map (comment, index) =>
+        `<Comment key={index} comment={ comment } handleDelete={this.handleDelete} />`
 
+      `<div className="commentList">{ commentNodes }</div>`
 
   CommentForm = React.createClass
     handleSubmit: (e) ->
@@ -63,16 +80,18 @@ $ ->
          <input type="submit" value="Post" />
        </form>`
 
-
   Comment = React.createClass
+    handleDelete: ->
+      @props.handleDelete(@props.comment.id)
     render: ->
-      rawMarkup = converter.makeHtml @props.children.toString()
+      rawMarkup = converter.makeHtml @props.comment.text.toString()
       `<div className="comment">
-         <h2 className="commentAuthor">{ this.props.author }</h2>
+         <h2 className="commentAuthor">{ this.props.comment.author }</h2>
          <span dangerouslySetInnerHTML={ { __html: rawMarkup } }></span>
+         <button onClick={this.handleDelete}>x</button>
        </div>`
 
-  React.render(
-    `<CommentBox url="/api/comments" pollInterval={ 2000 } />`,
-    $('#content')[0]
-  )
+  # React.render(
+  #   `<CommentBox url="/api/comments" pollInterval={ 2000 } />`,
+  #   $('#content')[0]
+  # )

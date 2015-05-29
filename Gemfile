@@ -44,3 +44,5 @@ group :development, :test do
 end
 
 gem 'react-rails', '~> 1.0'
+
+gem 'bower-rails'
